@@ -1,77 +1,24 @@
-import ast
 import os
 import collections
-
-from nltk import pos_tag
-
-
-def flat(_list):
-    """ [(1,2), (3,4)] -> [1, 2, 3, 4]"""
-    return sum([list(item) for item in _list], [])
-
-
-def is_verb(word):
-    if word:
-        pos_info = pos_tag([word])
-        return pos_info[0][1] == 'VB'
-
-def get_trees(_path, with_filenames=False, with_file_content=False):
-    filenames = []
-    trees = []
-    for dirname, dirs, files in os.walk(_path, topdown=True):
-        gen = (file for file in files if file.endswith('.py'))
-        for file in gen:
-            filenames.append(os.path.join(dirname, file))
-            if len(filenames) == 100:
-                break
-    print('total %s files' % len(filenames))
-    for filename in filenames:
-        with open(filename, 'r', encoding='utf-8') as attempt_handler:
-            main_file_content = attempt_handler.read()
-        tree = None
-        try:
-            tree = ast.parse(main_file_content)
-        except SyntaxError as e:
-            print(e)
-        if with_filenames:
-            if with_file_content:
-                trees.append((filename, main_file_content, tree))
-            else:
-                trees.append((filename, tree))
-        else:
-            trees.append(tree)
-    return trees
-
-
-def get_verbs_from_function_name(function_name):
-    return [word for word in function_name.split('_') if is_verb(word)]
-
-
-def get_top_verbs_in_path(path, top_size=10):
-    trees = [t for t in get_trees(path) if t]
-    fncs = [f for f in flat([[node.name.lower() for node in ast.walk(t) if isinstance(node, ast.FunctionDef)] for t in trees]) if not (f.startswith('__') and f.endswith('__'))]
-    verbs = flat([get_verbs_from_function_name(function_name) for function_name in fncs])
-    return collections.Counter(verbs).most_common(top_size)
-
+import functions as f
 
 verbs = []
 project_folders = [
-#    'django',
+    'django',
     'flask',
-#    'pyramid',
-#    'reddit',
-#    'requests',
-#    'sqlalchemy',
+    'pyramid',
+    'reddit',
+    'requests',
+    'sqlalchemy',
 ]
 for project in project_folders:
     path = os.path.join('.', project)
-    verbs += get_top_verbs_in_path(path)
+    verbs += f.get_top_verbs_in_path(path)
 
 top_size = 200
 words_count = 0
 
 for word, occurence in collections.Counter(verbs).most_common(top_size):
-    #print(word, occurence)
     words_count += word[1]
 
 print('total %s verbs, %s unique' % (words_count, len(set(verbs))))
