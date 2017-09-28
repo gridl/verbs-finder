@@ -1,6 +1,7 @@
 import os
 import collections
-import functions as f
+import sys
+import verbs_functions as vf
 
 verbs = []
 project_folders = [
@@ -11,9 +12,11 @@ project_folders = [
     'requests',
     'sqlalchemy',
 ]
+start_path = sys.argv[1] if len(sys.argv) > 1 else '.'
 for project in project_folders:
-    path = os.path.join('.', project)
-    verbs += f.get_top_verbs_in_path(path)
+    path = os.path.join(start_path, project)
+    print(path)
+    verbs += vf.get_top_verbs_in_path(path)
 
 top_size = 200
 words_count = 0
